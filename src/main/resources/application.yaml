@@ -1,3 +1,10 @@
 spring:
   application:
     name: barber
+  datasource:
+    url: jdbc:postgresql://localhost:5432/barber
+    username: vito
+    password: vito
+  jpa:
+    hibernate:
+      ddl-auto: update

@@ -8,6 +8,13 @@ public class UserCreationDTO {
     private String email;
     private String avatarUrl;
 
+    public UserCreationDTO(UUID id, String name, String email, String avatarUrl) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.avatarUrl = avatarUrl;
+    }
+
     public UUID getId() {
         return id;
     }

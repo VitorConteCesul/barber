@@ -38,13 +38,28 @@ public class UsersController {
     @PutMapping("/{id}")
     @Operation(summary = "Atualizar usuário", description = "Substitui e atualiza os dados de um usuário identificando-o pelo ID.")
     public ResponseEntity<UserCreationDTO> update(@PathVariable UUID id, @RequestBody UserCreationDTO updatedUser) {
-        return this.usersService.update(id, updatedUser).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+
+        Optional<UserCreationDTO> userUpdate = this.usersService.update(id, updatedUser);
+
+        if(userUpdate.isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(userUpdate.get());
     }
 
     @PatchMapping("/{id}/avatar")
     @Operation(summary = "Atualizar Avatar", description = "Atualiza o avatar de um usuário específico.")
     public ResponseEntity<UserCreationDTO> patchUser(@PathVariable UUID id, @RequestBody Map<String, Object> avatar) {
-        return this.usersService.updateAvatar(id, avatar).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+
+
+        Optional<UserCreationDTO> userUpdate = this.usersService.updateAvatar(id, avatar);
+
+        if(userUpdate.isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(userUpdate.get());
     }
 
     @DeleteMapping("/{id}")

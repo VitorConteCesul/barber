@@ -1,6 +1,9 @@
 package com.cesul.barber.services;
 
 import com.cesul.barber.dtos.UserCreationDTO;
+import com.cesul.barber.entity.Users;
+import com.cesul.barber.repository.ClientsRepository;
+import com.cesul.barber.utils.Mapper;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -8,54 +11,90 @@ import java.util.*;
 @Service
 public class UsersService {
 
-    private final List<UserCreationDTO> users = new ArrayList<>();
+    private final ClientsRepository repository;
+
+    public UsersService(ClientsRepository repository) {
+        this.repository = repository;
+    }
 
     public UserCreationDTO create(UserCreationDTO user) {
-        user.setId(UUID.randomUUID());
-        this.users.add(user);
-        return user;
+
+        Users newUser = new Users(user.getName(), user.getEmail(), user.getAvatarUrl());
+
+        Users userSaved = repository.save(newUser);
+
+        return Mapper.usersToUserCreationDTO(userSaved);
     }
 
     public List<UserCreationDTO> findAll() {
-        return this.users;
+
+        List<Users> users = repository.findAll();
+
+        List<UserCreationDTO> listUser = new ArrayList<>();
+
+        for (Users user: users){
+            listUser.add(Mapper.usersToUserCreationDTO(user));
+        }
+
+        return listUser;
     }
 
     public Optional<UserCreationDTO> findById(UUID id) {
-        return this.users.stream()
-                .filter(u -> u.getId().equals(id))
-                .findFirst();
-    }
+        Optional<Users> user = repository.findById(id);
 
-    public Optional<UserCreationDTO> update(UUID id, UserCreationDTO updatedUser) {
-        for (int i = 0; i < users.size(); i++) {
-            if (users.get(i).getId().equals(id)) {
-                updatedUser.setId(id);
-                users.set(i, updatedUser);
-                return Optional.of(updatedUser);
-            }
+        if (user.isPresent()){
+            UserCreationDTO dto = Mapper.usersToUserCreationDTO(user.get());
+            return Optional.of(dto);
         }
         return Optional.empty();
     }
 
+    public Optional<UserCreationDTO> update(UUID id, UserCreationDTO updatedUser) {
+
+        Optional<Users> users = repository.findById(id);
+
+        if(users.isEmpty()){
+            return Optional.empty();
+        }
+
+        users.get().setName(updatedUser.getName());
+        users.get().setAvatarUrl(updatedUser.getAvatarUrl());
+        users.get().setEmail(updatedUser.getEmail());
+
+        repository.save(users.get());
+
+        return Optional.empty();
+    }
+
     public Optional<UserCreationDTO> updateAvatar(UUID id, Map<String, Object> request) {
-        Optional<UserCreationDTO> userOptional = findById(id);
+        Optional<Users> userOptional = repository.findById(id);
 
         if (userOptional.isPresent()) {
-            UserCreationDTO existingUser = userOptional.get();
+
+            Users existingUser = userOptional.get();
+
             if (request.containsKey("avatarUrl")) {
                 existingUser.setAvatarUrl((String) request.get("avatarUrl"));
             }
-            return Optional.of(existingUser);
+
+            repository.save(existingUser);
+
+            return Optional.of(new UserCreationDTO(id, existingUser.getName(), existingUser.getEmail(), existingUser.getAvatarUrl()));
         }
 
         return Optional.empty();
     }
 
     public boolean delete(UUID id) {
-        return this.users.removeIf(u -> u.getId().equals(id));
+        try {
+            repository.deleteById(id);
+            return true;
+        } catch (Exception e){
+            return false;
+        }
     }
 
     public void clear() {
-        this.users.clear();
+        repository.deleteAll();
     }
 }
